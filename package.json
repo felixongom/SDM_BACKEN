@@ -12,12 +12,15 @@
   "license": "ISC",
   "type": "commonjs",
   "dependencies": {
+    "@felix-ongom/randomize": "^1.0.1",
     "cors": "^2.8.5",
     "express": "^5.1.0",
     "express-file-backet": "^1.0.3",
     "express-fileupload": "^1.5.2",
     "lodash": "^4.17.21",
     "multer": "^2.0.2",
+    "sequelize": "^6.37.7",
+    "sqlite3": "^5.1.7",
     "xlsx": "^0.18.5"
   },
   "devDependencies": {

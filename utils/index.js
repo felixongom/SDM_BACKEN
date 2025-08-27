@@ -59,8 +59,79 @@ try {
   return false
 }
 }
+ function  convertSchoolInfoToObject(inputArray) {
+  const result = {};
+  if(!Array.isArray(inputArray)) return inputArray
+  inputArray?.forEach(item => {
+    if (item && Object.keys(item).length === 2 && 'ARTTRIBUTE' in item && 'VALUE' in item) {
+      result[item.ARTTRIBUTE.trim()] = item.VALUE;
+    }
+  });
+  return result;
+}
+
+// 
+function extractSubjects(obj) {
+  const pattern = /^[A-Z]+ ?\d+$/i;   // matches "MTC 1", "AGR 2", etc.
+  const specialKeys = ["SM", "GP"];
+
+  // Extract matching keys with value = 1
+  let extracted = Object.keys(obj).reduce((acc, key) => {
+    const cleanKey = key.trim();
+    if ((pattern.test(cleanKey) || specialKeys.includes(cleanKey)) && obj[key] === 1) {
+      acc[cleanKey] = obj[key];
+    }
+    return acc;
+  }, {});
+
+  // Sort the keys alphabetically, keeping "GP" at the end
+  const sortedKeys = Object.keys(extracted).sort((a, b) => {
+    if (a === "GP") return 1;
+    if (b === "GP") return -1;
+    return a.localeCompare(b, undefined, { numeric: true });
+  });
+
+  // Build sorted object
+  const sortedObj = {};
+  sortedKeys.forEach(key => {
+    sortedObj[key] = extracted[key];
+  });
+
+  return sortedObj;
+}
+
+// 
+function mapLearnersWithStream(learner, stream) {
+
+  // Create a lookup for stream IDs → names for efficiency
+  const streamMap = Object.fromEntries(stream.map(s => [s.id, s.stream]));
+
+  // Replace stream_id with stream name
+  return learner.map((l ,i)=> ({
+    ...l,
+    stream: streamMap[l.stream_id] || null, // replace
+    sequence: i+1, 
+  }));
+}
+
+// 
+function mapById(arr) {
+  return arr.reduce((obj, { id, short_name }) => {
+    obj[id] = short_name;
+    return obj;
+  }, {});
+}
+
+
+
+
+
 module.exports = {
   transformImageUrls,
   assignStudentPositions,
-  deleteUploadFolder
+  deleteUploadFolder,
+  convertSchoolInfoToObject,
+  extractSubjects,
+  mapLearnersWithStream,
+  mapById
 }
