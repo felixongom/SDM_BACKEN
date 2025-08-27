@@ -2,11 +2,10 @@ const path = require('path')
 const xlsx = require('xlsx')
 const _ = require('lodash')
 const {saveFiles, getFiles} = require("express-file-backet");
-const {transformImageUrls, assignStudentPositions, deleteUploadFolder, mapLearnersWithStream, mapById} = require("../utils/index")
+const {transformImageUrls, assignStudentPositions, deleteUploadFolder, mapLearnersWithStream, addPaperName, groupByLearner, mapStreamById, mapSubjectById, mergeLearnersWithPapersAndStream} = require("../utils/index")
 const {enroleStudents} = require("../utils/controller_util")
 const db = require("../model");
-const {Op, where} = require('sequelize');
-const { Subject } = require('../model/Others');
+const {Op} = require('sequelize');
 
 function readExcelFile(req, res){
   if (!req.files || !req.files.file) {
@@ -129,8 +128,11 @@ async function getSubjectEnrolement(req, res) {
   let {clas, year, term, exam, subj_ids } = req.params
   const Enrolement = db.enrolement;
   const Subject = db.subject;
+  const Student = db.student;
+  const Stream = db.stream;
   try {
     let ids = subj_ids.split(',').map(id=>parseInt(id))
+    let stream = mapStreamById(await Stream.findAll({raw:true}))
     
     //
     let subjects = await Subject.findAll({
@@ -141,8 +143,7 @@ async function getSubjectEnrolement(req, res) {
       },
       raw:true
     })
-    subjects = mapById(subjects)
-    console.log(subjects);
+    subjects = mapSubjectById(subjects)
 
     let subject_enrolement = await Enrolement.findAll({
       where:{
@@ -156,8 +157,20 @@ async function getSubjectEnrolement(req, res) {
       },
       raw:true
     }) 
-
-    res.send(subject_enrolement)
+    let reshaped =  addPaperName(subject_enrolement,subjects)
+    let grouped = _.map(groupByLearner(reshaped), (element, i)=>({...element, sequence: i+1})) 
+    // Get the learners from the database
+    let students = await Student.findAll({
+      where:{
+        id: {
+          [Op.in]:_.map(grouped, item=>item.learner_id)
+        }
+      },
+      raw:true
+    })
+    let last_result = mergeLearnersWithPapersAndStream(stream, grouped, students)
+    // console.log(last_result);
+    res.send(last_result)
   } catch (error) {
     console.log(error);
     

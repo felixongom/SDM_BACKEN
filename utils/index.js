@@ -114,13 +114,80 @@ function mapLearnersWithStream(learner, stream) {
   }));
 }
 
-// 
-function mapById(arr) {
+// map subject to id
+function mapSubjectById(arr) {
   return arr.reduce((obj, { id, short_name }) => {
     obj[id] = short_name;
     return obj;
   }, {});
 }
+// map stream to id
+function mapStreamById(arr) {
+  return arr.reduce((obj, { id, stream }) => {
+    obj[id] = stream;
+    return obj;
+  }, {});
+}
+
+// 
+function addPaperName(array, obj){  
+  return _.map(array, element=>({...element, paper:obj[element.paper_id]}))
+}
+
+// 
+function groupByLearner(arr) {
+  // Group by learner_id
+  const grouped = _.groupBy(arr, 'learner_id');
+  
+  return _.map(grouped, (items, learner_id) => {
+    // Take the first item to get shared fields
+    const { clas, exam, year, term, is_verified } = items[0];
+
+    const papers = _.fromPairs(items.map((i, index )=> [`paper_${index+1}`, i.paper]));
+    const marks = _.fromPairs(items.map((i, index) => [`paper_${index+1}`, i.mark]));
+
+    return {
+      learner_id: Number(learner_id),
+      clas,
+      exam,
+      year,
+      term,
+      is_verified,
+      papers,
+      marks,
+    };
+  });
+}
+
+// marge learner to the marks
+/**
+ * Merge learner info into papers/marks dataset using stream lookup
+ * @param {Object} streamLookup - { stream_id: stream_name, ... }
+ * @param {Array} papersData - Array of paper/marks objects (with learner_id)
+ * @param {Array} learners - Array of learner objects (with id)
+ * @param {Array} fieldsToPick - Fields to pick from learner object except stream_id (default ['learner', 'gender'])
+ * @returns {Array} - Merged array with stream name instead of stream_id
+ */
+function mergeLearnersWithPapersAndStream(streamLookup, papersData, learners, fieldsToPick = ['learner', 'gender']) {
+  // Create a lookup for learners by id
+  const learnerMap = _.keyBy(learners, 'id');
+
+  return papersData.map(item => {
+    const learner = learnerMap[item.learner_id];
+    if (learner) {
+      // Pick requested fields from learner
+      const extra = _.pick(learner, fieldsToPick);
+
+      // Add stream name from streamLookup
+      extra.stream = streamLookup[learner.stream_id] || null;
+
+      return { ...item, ...extra };
+    }
+    return item; // if no match, keep as is
+  });
+}
+
+
 
 
 
@@ -133,5 +200,9 @@ module.exports = {
   convertSchoolInfoToObject,
   extractSubjects,
   mapLearnersWithStream,
-  mapById
+  mapSubjectById,
+  mapStreamById,
+  addPaperName,
+  groupByLearner,
+  mergeLearnersWithPapersAndStream
 }
