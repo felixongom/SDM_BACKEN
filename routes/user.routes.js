@@ -6,7 +6,7 @@ const { readExcelFile, uploadPhotos, deletePhotos, getEnrolement,getSubjectEnrol
 router.post('/upload-excel', readExcelFile);
 router.post('/pics/uploads', uploadPhotos);
 router.delete('/delete-photos', deletePhotos);
-router.get('/enrolement/clas/:clas/year/:year/term/:term', getEnrolement);
+router.get('/enrolement/clas/:clas/year/:year/term/:term/exam/:exam', getEnrolement);
 router.get('/enrolement/clas/:clas/year/:year/term/:term/exam/:exam/subj/:subj_ids', getSubjectEnrolement);
 
  

@@ -3,7 +3,7 @@ const xlsx = require('xlsx')
 const _ = require('lodash')
 const {saveFiles, getFiles} = require("express-file-backet");
 const {transformImageUrls, assignStudentPositions, deleteUploadFolder, mapLearnersWithStream, addPaperName, groupByLearner, mapStreamById, mapSubjectById, mergeLearnersWithPapersAndStream} = require("../utils/index")
-const {enroleStudents} = require("../utils/controller_util")
+const {enroleStudents, mergeEnrolmentsToStudent} = require("../utils/controller_util")
 const db = require("../model");
 const {Op} = require('sequelize');
 
@@ -88,7 +88,7 @@ async function deletePhotos (req,res){
 
 //get enrolement in year, term, clas
 async function getEnrolement(req, res) {
-  let {year, term,clas } = req.params
+  let {year, term,clas, exam } = req.params
   try {
     const Enrolement = db.enrolement;
     const Student = db.student;
@@ -97,15 +97,12 @@ async function getEnrolement(req, res) {
     let stream = await Stream.findAll({ raw: true })
     let enroled_list = await Enrolement.findAll({
       where:{year:parseInt(year), term:parseInt(term), clas:parseInt(clas)},
-      attributes: [
-      'learner_id',
-    ],
-    group: ['learner_id']
+      attributes: ['learner_id'],
+      group: ['learner_id']
     })
     
     //get array od ids
    const ids = _.map(enroled_list, (enrolement)=>enrolement.learner_id) 
-
     //
     let learner = await Student.findAll({raw: true ,
       where: {
@@ -114,9 +111,9 @@ async function getEnrolement(req, res) {
         }
       }
     })
-    let data = mapLearnersWithStream(learner, stream)
-    
-    res.send(data)
+    let data =  mapLearnersWithStream(learner, stream)
+    let _data = await mergeEnrolmentsToStudent(data, {year, term, clas,exam })
+    res.send(_data)
   } catch (error) {
     console.log(error);
   }
@@ -133,7 +130,6 @@ async function getSubjectEnrolement(req, res) {
   try {
     let ids = subj_ids.split(',').map(id=>parseInt(id))
     let stream = mapStreamById(await Stream.findAll({raw:true}))
-    
     //
     let subjects = await Subject.findAll({
       where:{
@@ -169,7 +165,6 @@ async function getSubjectEnrolement(req, res) {
       raw:true
     })
     let last_result = mergeLearnersWithPapersAndStream(stream, grouped, students)
-    // console.log(last_result);
     res.send(last_result)
   } catch (error) {
     console.log(error);
