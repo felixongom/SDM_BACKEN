@@ -49,7 +49,75 @@ function assignStudentPositions(students, rankKeys = { AVG: 'desc' }) {
 
   return finalRanked
 }
+// assign 'A' level position
 
+function assignALevelPositions(students) {
+  // sort with rules: total_points, GP.points, SM/ICT.points
+  const sorted = _.orderBy(
+    students,
+    [
+      (s) => s.total_points,
+      (s) => _.get(s, "grade_per_subject.GP.points", -Infinity),
+      (s) =>
+        _.get(s, "grade_per_subject.SM.points", _.get(s, "grade_per_subject.ICT.points", -Infinity))
+    ],
+    ["desc", "desc", "desc"]
+  );
+
+  // assign class positions
+  let lastValues = null;
+  let currentRank = 0;
+  let sameRankCount = 0;
+
+  _.forEach(sorted, (s, i) => {
+    const values = [
+      s.total_points,
+      _.get(s, "grade_per_subject.GP.points", -Infinity),
+      _.get(s, "grade_per_subject.SM.points", _.get(s, "grade_per_subject.ICT.points", -Infinity))
+    ];
+
+    if (_.isEqual(values, lastValues)) {
+      // tie → same rank
+      s.PSN = currentRank;
+      sameRankCount++;
+    } else {
+      currentRank = i + 1;
+      s.PSN = currentRank;
+      sameRankCount = 1;
+    }
+
+    lastValues = values;
+  });
+
+  // group by stream for stream positions
+  const groupedByStream = _.groupBy(sorted, "stream");
+
+  _.forEach(groupedByStream, (streamStudents) => {
+    let lastValues = null;
+    let currentRank = 0;
+
+    _.forEach(streamStudents, (s, i) => {
+      const values = [
+        s.total_points,
+        _.get(s, "grade_per_subject.GP.points", -Infinity),
+        _.get(s, "grade_per_subject.SM.points", _.get(s, "grade_per_subject.ICT.points", -Infinity))
+      ];
+
+      if (_.isEqual(values, lastValues)) {
+        s.PSN_IN_STREAM = currentRank;
+      } else {
+        currentRank = i + 1;
+        s.PSN_IN_STREAM = currentRank;
+      }
+
+      lastValues = values;
+    });
+  });
+
+  return sorted;
+}
+
+// 
 async function deleteUploadFolder(folder_path){
 try {
   await fs.rm(folder_path, {recursive:true, force:true})
@@ -204,5 +272,6 @@ module.exports = {
   mapStreamById,
   addPaperName,
   groupByLearner,
-  mergeLearnersWithPapersAndStream
+  mergeLearnersWithPapersAndStream,
+  assignALevelPositions
 }

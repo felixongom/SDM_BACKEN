@@ -3,8 +3,6 @@ const exam_short_name = {BOT:1, MOT:2, EOT:3}
 // 
 function swapObjectKeysAndValues(obj) {
   const swappedObj = {}; // Create a new object to store the swapped key-value pairs
-
-  // Iterate over the keys of the original object
   for (const key in obj) {
     // Ensure the property belongs to the object itself and not its prototype chain
     if (Object.prototype.hasOwnProperty.call(obj, key)) {
@@ -29,8 +27,32 @@ const grade ={
     ['80-100']:1,
 } 
 
+//grade letter 
+const grade_letter = {
+    1:'A',
+    2:'A',
+    3:'B',
+    4:'C',
+    5:'D',
+    6:'3',
+    7:'O',
+    8:'O',
+    9:'F',
+}
+//grade letter 
+const points = {
+    A:6,
+    B:5,
+    C:4,
+    D:3,
+    E:2,
+    O:1,
+    F:0,
+}
 module.exports = {
   exam_short_name,
   swapObjectKeysAndValues,
   grade,
+  grade_letter,
+  points
 }

@@ -1,8 +1,8 @@
 const _ = require("lodash");
 const db = require("../model");
 const { randomize } = require("@felix-ongom/randomize");
-const { convertSchoolInfoToObject, extractSubjects, mapSubjectById } = require(".");
-const { exam_short_name, swapObjectKeysAndValues, grade } = require("./constant");
+const { convertSchoolInfoToObject, extractSubjects, mapSubjectById, assignALevelPositions } = require(".");
+const { exam_short_name, swapObjectKeysAndValues, grade, grade_letter, points } = require("./constant");
 async function enroleStudents(data, CLASS) {
   let CLAS = parseInt(+CLASS.split(" ").pop());
 
@@ -151,10 +151,12 @@ async function mergeEnrolmentsToStudent(learners, boidata) {
      learner.num_subjects = countSubjects(learner.enrolement)
      learner.num_papers = learner.enrolement.length
      learner.reordered = reorderSubject(learner.enrolement)
-     learner.grade_per_subject = groupGradesBySubject(learner.enrolement)
+     learner.grade_per_subject = groupGradesBySubject(learner.enrolement, getLetter, getPoints )
+     learner.total_points = getTotalPoints(learner.grade_per_subject)
+     learner.string_grade_per_subject = groupGradesBySubjectAsStudent(learner.enrolement)
      all_learners = [...all_learners, learner];
     }
-    return all_learners;
+    return assignALevelPositions(all_learners);
   } catch (error) {
     console.error("Error fetching enrolments:", error);
   }
@@ -200,6 +202,7 @@ function countSubjects(papers) {
 }
 // 
 function getGrade(grade, mark) {
+    // console.log(grade, mark);
   for (const range in grade) {
     const [min, max] = range.split("-").map(Number);
     if (mark >= min && mark <= max) {
@@ -208,7 +211,6 @@ function getGrade(grade, mark) {
   }
   return null; // return null if mark is out of range
 }
-//
 
 //subject reorder
 function reorderSubject(papers) {
@@ -238,13 +240,65 @@ function reorderSubject(papers) {
 }
 
 // group grades per subject
+function groupGradesBySubject(papers, getLetter, getPoints) {
+  const grouped = _.groupBy(papers, (p) => p.paper.split(" ")[0]); // e.g. ENT, MTC, PHY
 
-function groupGradesBySubject(papers) {
+  return _.mapValues(grouped, (group, subject) => {
+    const grades = group.map((p) => p.grade);
+
+    // pass both grades and subject to getLetter
+    const letter = getLetter(grades, subject);
+    return {
+      grade: grades,
+      letter,
+      points: getPoints ? getPoints(letter, subject) : null
+    };
+  });
+}
+
+// group grades per subject
+function groupGradesBySubjectAsStudent(papers) {
   // Group by subject prefix (first word in paper name)
   const grouped = _.groupBy(papers, (p) => p.paper.split(" ")[0]);
   // Map into object of arrays of grades
-  return _.mapValues(grouped, (group) => group.map((p) => p.grade));
+  return _.mapValues(grouped, (group) => group.map((p) => p.grade).join());
 }
+
+// Grade latters
+function getLetter(grade_array, subject){
+    let grades = grade_array.sort() 
+    // 
+    if(subject==='GP' || subject==='SM' || subject.startsWith('ICT')){        
+        return grades[0]<7?'O':'F'
+    }else if(grades.length===1){
+        return grade_letter[grade_array[0]] 
+    }else if(grade_array.length===2){
+        if(grades[0]===9 && grades[1]===9) return grade_letter[9]        
+        if((grades[0]===8 && grades[1]===9) || (grades[0]===7 && grades[1]===9)) return grade_letter[9-1]
+        return grade_letter[grades[1]-1]
+        
+    }else if(grade_array.length===3){
+        return 'F'
+
+    }else if(grade_array.length===4){
+
+    }else{
+        return null
+    }
+}
+
+// calculate points
+function getPoints(letter){
+    return points[letter]
+}
+
+//get total points
+function getTotalPoints(subjects) {
+  return Object.values(subjects).reduce((total, subj) => {
+    return total + (subj.points || 0);
+  }, 0);
+}
+
 
 
 
@@ -255,5 +309,8 @@ module.exports = {
   countSubjects,
   getGrade,
   reorderSubject,
-  groupGradesBySubject
+  groupGradesBySubject,
+  groupGradesBySubjectAsStudent,
+  getLetter,
+  getTotalPoints
 };
