@@ -2,7 +2,7 @@ const _ = require("lodash");
 const db = require("../model");
 const { randomize } = require("@felix-ongom/randomize");
 const { convertSchoolInfoToObject, extractSubjects, mapSubjectById, assignALevelPositions } = require(".");
-const { exam_short_name, swapObjectKeysAndValues, grade, grade_letter, points } = require("./constant");
+const { exam_short_name, swapObjectKeysAndValues, grade, grade_letter, points, comination } = require("./constant");
 async function enroleStudents(data, CLASS) {
   let CLAS = parseInt(+CLASS.split(" ").pop());
 
@@ -116,11 +116,13 @@ async function enroleStudent(student, school_id, school_info, CLAS) {
 }
 
 async function mergeEnrolmentsToStudent(learners, boidata) {
+  boidata.exam = exam_short_name[boidata.exam];  
   const Enrolement = db.enrolement;
   const Subject = db.subject;
-  //
-      let subjects = await Subject.findAll({raw:true})
-    subjects = mapSubjectById(subjects)    
+  // 
+   
+  let subjects = await Subject.findAll({raw:true})
+  subjects = mapSubjectById(subjects)    
 
   try {
     let all_learners = [];
@@ -166,7 +168,7 @@ async function mergeEnrolmentsToStudent(learners, boidata) {
   }
 }
 
-let comb = {EMP:'PEM'}
+
 
 // Generate combination
 function getSubjectCombination(papers) {
@@ -179,7 +181,7 @@ function getSubjectCombination(papers) {
     .join("").sort().join('') // e.g. EMP
     .value()
 
-    initials = comb[initials] || initials
+    initials = comination[initials] || initials
 
   // check if SM or ICT exists in papers
   const hasSM = papers.some(p => p.paper.startsWith("SM"));

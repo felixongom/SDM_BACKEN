@@ -185,6 +185,7 @@ function groupByLearner(arr) {
     const { clas, exam, year, term, is_verified } = items[0];
 
     const papers = _.fromPairs(items.map((i, index )=> [`paper_${index+1}`, i.paper]));
+    const paper_id = _.fromPairs(items.map((i, index )=> [`paper_${index+1}_id`, i.id]));
     const marks = _.fromPairs(items.map((i, index) => [`paper_${index+1}`, i.mark]));
 
     return {
@@ -195,6 +196,7 @@ function groupByLearner(arr) {
       term,
       is_verified,
       papers,
+      paper_id,
       marks,
     };
   });
@@ -229,6 +231,18 @@ function mergeLearnersWithPapersAndStream(streamLookup, papersData, learners, fi
 }
 
 
+//group subject by papers
+function groupSubjects(arr) {
+  // Group by prefix (before space, or whole string if no space)
+  const grouped = _.groupBy(arr, (item) => item.short_name.split(" ")[0]);
+
+  // Convert groups to desired format
+  return _.map(grouped, (items, subject) => ({
+    ids: _.join(_.map(items, "id"), ","),
+    subject
+  }));
+}
+
 
 
 
@@ -246,5 +260,6 @@ module.exports = {
   addPaperName,
   groupByLearner,
   mergeLearnersWithPapersAndStream,
-  assignALevelPositions
+  assignALevelPositions,
+  groupSubjects
 }

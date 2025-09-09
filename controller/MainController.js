@@ -2,7 +2,7 @@ const path = require('path')
 const xlsx = require('xlsx')
 const _ = require('lodash')
 const {saveFiles, getFiles} = require("express-file-backet");
-const {transformImageUrls, assignStudentPositions, deleteUploadFolder, mapLearnersWithStream, addPaperName, groupByLearner, mapStreamById, mapSubjectById, mergeLearnersWithPapersAndStream} = require("../utils/index")
+const {transformImageUrls, assignStudentPositions, deleteUploadFolder, mapLearnersWithStream, addPaperName, groupByLearner, mapStreamById, mapSubjectById, mergeLearnersWithPapersAndStream, convertSchoolInfoToObject} = require("../utils/index")
 const {enroleStudents, mergeEnrolmentsToStudent} = require("../utils/controller_util")
 const db = require("../model");
 const {Op} = require('sequelize');
@@ -51,7 +51,12 @@ function readExcelFile(req, res){
       }
     });
     // 
-    if(req.query.sheet1 ==="SENIOR 5" || req.query.sheet1 ==="SENIOR 6"){
+    if(req.query.sheet1 ==="MARKS"){
+      // console.log('reaced',result);
+      res.send({result:result.MARKS, INFO:convertSchoolInfoToObject(result.INFO)})
+      
+
+    }else if(req.query.sheet1 ==="SENIOR 5" || req.query.sheet1 ==="SENIOR 6"){
         // call the function that enrolse studedes
         enroleStudents(result,req.query.sheet1)
         res.send(true)
@@ -101,7 +106,7 @@ async function getEnrolement(req, res) {
       group: ['learner_id']
     })
     
-    //get array od ids
+    //get array of ids
    const ids = _.map(enroled_list, (enrolement)=>enrolement.learner_id) 
     //
     let learner = await Student.findAll({raw: true ,
@@ -153,7 +158,9 @@ async function getSubjectEnrolement(req, res) {
       },
       raw:true
     }) 
+    
     let reshaped =  addPaperName(subject_enrolement,subjects)
+    
     let grouped = _.map(groupByLearner(reshaped), (element, i)=>({...element, sequence: i+1})) 
     // Get the learners from the database
     let students = await Student.findAll({

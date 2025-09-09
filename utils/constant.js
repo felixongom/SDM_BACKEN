@@ -49,10 +49,22 @@ const points = {
     O:1,
     F:0,
 }
+
+// combination
+let comination = {
+  EMP:'PEM',
+  BCM:'BCM',
+  AEG:'GEA',
+  CMP:'PCM',
+  DHL:'HLD',
+  ABC:'BCA',
+  EGM:'MEG'
+}
 module.exports = {
   exam_short_name,
   swapObjectKeysAndValues,
   grade,
   grade_letter,
-  points
+  points,
+  comination
 }
