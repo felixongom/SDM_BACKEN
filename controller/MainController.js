@@ -2,10 +2,11 @@ const path = require('path')
 const xlsx = require('xlsx')
 const _ = require('lodash')
 const {saveFiles, getFiles} = require("express-file-backet");
-const {transformImageUrls, assignStudentPositions, deleteUploadFolder, mapLearnersWithStream, addPaperName, groupByLearner, mapStreamById, mapSubjectById, mergeLearnersWithPapersAndStream, convertSchoolInfoToObject, extractMarks} = require("../utils/index")
+const {transformImageUrls, assignStudentPositions, deleteUploadFolder, mapLearnersWithStream, addPaperName, groupByLearner, mapStreamById, mergeLearnersWithPapersAndStream, convertSchoolInfoToObject, extractMarks} = require("../utils/index")
 const {enroleStudents, mergeEnrolmentsToStudent} = require("../utils/controller_util")
 const db = require("../model");
 const {Op} = require('sequelize');
+const { mapSubjectById } = require('../utils/grade');
 
 function readExcelFile(req, res){
   if (!req.files || !req.files.file) {

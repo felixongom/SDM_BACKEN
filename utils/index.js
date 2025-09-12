@@ -1,6 +1,6 @@
 const _ = require("lodash");
 const fs = require("fs").promises;
-const { getGrade, getLetter } = require("./controller_util");
+const { getGrade, getLetter } = require("./grade");
 const { grade } = require("./constant");
 
 /* ------------------------------------------------------------------

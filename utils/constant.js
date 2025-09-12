@@ -60,7 +60,9 @@ let comination = {
   ABC:'BCA',
   EGM:'MEG',
   DEL:'LED',
-  DEH:'HED'
+  DEH:'HED',
+  AEM:'MEA',
+  MPT:'PMT'
 
 }
 module.exports = {
