@@ -58,7 +58,10 @@ let comination = {
   CMP:'PCM',
   DHL:'HLD',
   ABC:'BCA',
-  EGM:'MEG'
+  EGM:'MEG',
+  DEL:'LED',
+  DEH:'HED'
+
 }
 module.exports = {
   exam_short_name,

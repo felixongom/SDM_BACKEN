@@ -2,7 +2,7 @@ const path = require('path')
 const xlsx = require('xlsx')
 const _ = require('lodash')
 const {saveFiles, getFiles} = require("express-file-backet");
-const {transformImageUrls, assignStudentPositions, deleteUploadFolder, mapLearnersWithStream, addPaperName, groupByLearner, mapStreamById, mapSubjectById, mergeLearnersWithPapersAndStream, convertSchoolInfoToObject} = require("../utils/index")
+const {transformImageUrls, assignStudentPositions, deleteUploadFolder, mapLearnersWithStream, addPaperName, groupByLearner, mapStreamById, mapSubjectById, mergeLearnersWithPapersAndStream, convertSchoolInfoToObject, extractMarks} = require("../utils/index")
 const {enroleStudents, mergeEnrolmentsToStudent} = require("../utils/controller_util")
 const db = require("../model");
 const {Op} = require('sequelize');
@@ -53,9 +53,9 @@ function readExcelFile(req, res){
     // 
     if(req.query.sheet1 ==="MARKS"){
       // console.log('reaced',result);
+      updateMarks(result.MARKS)
       res.send({result:result.MARKS, INFO:convertSchoolInfoToObject(result.INFO)})
       
-
     }else if(req.query.sheet1 ==="SENIOR 5" || req.query.sheet1 ==="SENIOR 6"){
         // call the function that enrolse studedes
         enroleStudents(result,req.query.sheet1)
@@ -172,6 +172,7 @@ async function getSubjectEnrolement(req, res) {
       raw:true
     })
     let last_result = mergeLearnersWithPapersAndStream(stream, grouped, students)
+    
     res.send(last_result)
   } catch (error) {
     console.log(error);
@@ -179,11 +180,46 @@ async function getSubjectEnrolement(req, res) {
   }
     
 }
+// upload and update marks
+async function updateMarks(results){
+  try {
+    
+  
+    if(!Array.isArray(results) || results.length===0) return results
+    // 
+    for(let result of results){
+      result.MARKS_ID = result['MARKS_ID'].split(',')
+      let a_student_data = extractMarks(result);
+      
+      // call the db
+      for(const data of a_student_data){
+        const Enrolement = db.enrolement
+        //updatedb
+          // Validate mark
+  const is_valid =
+    Number.isInteger(parseInt(data.mark)) &&
+    data.mark >= 0 &&
+    data.mark <= 100;
 
+  const markValue = is_valid ? parseInt(data.mark) : null;
+
+  // Option 1: If you want to update an existing row
+  const [updated] = await Enrolement.update(
+    { mark: markValue },
+    { where: { id: data.id } }
+      )}}
+      
+      console.log('updated');
+  } catch (error) {
+    console.log(error);
+    
+  }
+}
 module.exports = { 
   readExcelFile, 
   uploadPhotos, 
   deletePhotos,
   getEnrolement,
-  getSubjectEnrolement
+  getSubjectEnrolement,
+  updateMarks
 }
