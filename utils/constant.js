@@ -26,7 +26,7 @@ const grade ={
     ['80-84']:2,
     ['85-100']:1,
 } 
-
+ 
 //grade letter 
 const grade_letter = {
     1:'A',
@@ -62,7 +62,9 @@ let comination = {
   DEL:'LED',
   DEH:'HED',
   AEM:'MEA',
-  MPT:'PMT'
+  MPT:'PMT',
+  EGL:'LEG',
+  AEL:'LEA',
 
 }
 module.exports = {

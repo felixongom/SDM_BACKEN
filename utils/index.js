@@ -2,7 +2,7 @@ const _ = require("lodash");
 const fs = require("fs").promises;
 const { getGrade, getLetter } = require("./grade");
 const { grade } = require("./constant");
-
+ 
 /* ------------------------------------------------------------------
  * Image helpers
  * ------------------------------------------------------------------ */
@@ -221,10 +221,12 @@ function extractMarks(row) {
   const ids = row.MARKS_ID || [];
   const subjectKeys = _.without(Object.keys(row), "MARKS_ID", "LEARNER");
 
-  return ids.map((id, idx) => ({
+  let d = ids.map((id, idx) => ({
     id: parseInt(id, 10),
     mark: row[subjectKeys[idx]] ?? "",
   }));
+  
+  return d
 }
 
 /* ------------------------------------------------------------------

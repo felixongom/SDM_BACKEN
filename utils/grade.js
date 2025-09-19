@@ -168,10 +168,23 @@ function assignALevelPositions(students) {
 
   return sorted;
 }
+
+// 
+function renameKeysInArray(data, keyMap) {
+  if (!Array.isArray(data)) return [];
+
+  return _.map(data, (item) =>
+    _.mapKeys(item, (_value, key) =>
+      _.has(keyMap, key) ? keyMap[key] : key
+    )
+  );
+}
+
 module.exports = {
   getGrade,
   getLetter,
   getTotalPoints,
   mapSubjectById,
-  assignALevelPositions
+  assignALevelPositions,
+  renameKeysInArray
 };

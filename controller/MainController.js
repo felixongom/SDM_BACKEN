@@ -6,7 +6,7 @@ const {transformImageUrls, assignStudentPositions, deleteUploadFolder, mapLearne
 const {enroleStudents, mergeEnrolmentsToStudent} = require("../utils/controller_util")
 const db = require("../model");
 const {Op} = require('sequelize');
-const { mapSubjectById } = require('../utils/grade');
+const { mapSubjectById, renameKeysInArray } = require('../utils/grade');
 
 function readExcelFile(req, res){
   if (!req.files || !req.files.file) {
@@ -119,7 +119,8 @@ async function getEnrolement(req, res) {
     })
     let data =  mapLearnersWithStream(learner, stream)
     let _data = await mergeEnrolmentsToStudent(data, {year, term, clas,exam })
-    res.send(_data)
+    
+    res.send(renameKeysInArray(_data,{learner:'STUDENT NAME', stream:'STREAM', gender:'SEX'}))
   } catch (error) {
     console.log(error);
   }
@@ -182,45 +183,58 @@ async function getSubjectEnrolement(req, res) {
     
 }
 // upload and update marks
-async function updateMarks(results){
+async function updateMarks(results) {
   try {
-    
-  
-    if(!Array.isArray(results) || results.length===0) return results
-    // 
-    for(let result of results){
-      result.MARKS_ID = result['MARKS_ID'].split(',')
-      let a_student_data = extractMarks(result);
+    if (!Array.isArray(results) || results.length === 0) return results;
+
+    for (let result of results) {
+      // Ensure MARKS_ID is always an array
+      if (typeof result.MARKS_ID === "string") {
+        result.MARKS_ID = result.MARKS_ID.split(",");
+      }
+
+      const a_student_data = extractMarks(result);
       
       // call the db
-      for(const data of a_student_data){
-        const Enrolement = db.enrolement
-        //updatedb
-          // Validate mark
-  const is_valid =
-    Number.isInteger(parseInt(data.mark)) &&
-    data.mark >= 0 &&
-    data.mark <= 100;
+      for (const data of a_student_data) {
+        const Enrolement = db.enrolement;
+        
+        // Validate mark
+        const parsed = parseInt(data.mark, 10);
+        const is_valid =
+          Number.isInteger(parsed) && parsed >= 0 && parsed <= 100;
 
-  const markValue = is_valid ? parseInt(data.mark) : null;
+        const markValue = is_valid ? parsed : null;
 
-  // Option 1: If you want to update an existing row
-  const [updated] = await Enrolement.update(
-    { mark: markValue },
-    { where: { id: data.id } }
-      )}}
-      
-      console.log('updated');
+        // Update existing row
+           console.log({ mark: markValue },
+           { where: { id: data.id } });
+
+        await Enrolement.update({ mark: markValue },{ where: { id: data.id } });
+      }
+    }
+
+    console.log("updated");
   } catch (error) {
-    console.log(error);
-    
+    console.error("Error in updateMarks:", error);
   }
 }
+
+// get school info
+async function getSchoolInfo(req, res){
+  const School = db.school;
+  const school = await School.findOne({ raw:true })
+  console.log(school);
+  res.send(school)
+  
+}
+
 module.exports = { 
   readExcelFile, 
   uploadPhotos, 
   deletePhotos,
   getEnrolement,
   getSubjectEnrolement,
-  updateMarks
+  updateMarks,
+  getSchoolInfo
 }
