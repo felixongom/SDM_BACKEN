@@ -1,7 +1,9 @@
 const _ = require("lodash");
-const fs = require("fs").promises;
+// const fs = require("fs").promises;
+const fs = require('fs');
 const { getGrade, getLetter } = require("./grade");
 const { grade } = require("./constant");
+const path = require("path");
  
 /* ------------------------------------------------------------------
  * Image helpers
@@ -67,15 +69,24 @@ function assignStudentPositions(students, rankKeys = { AVG: "desc" }) {
 /**
  * Delete a folder and its contents
  */
-async function deleteUploadFolder(folderPath) {
-  try {
-    await fs.rm(folderPath, { recursive: true, force: true });
-    return true;
-  } catch (err) {
-    console.error(`Error deleting folder ${folderPath}:`, err.message);
-    return false;
-  }
+  
+function deleteUploadFolder(folder_path) {
+  if (!fs.existsSync(folder_path)) return;
+
+  fs.readdirSync(folder_path).forEach(file => {
+    const curPath = path.join(folder_path, file);
+    if (fs.lstatSync(curPath).isDirectory()) {
+      // Recursively delete folder
+      fs.rmSync(curPath, { recursive: true, force: true });
+    } else {
+      // Delete file
+      fs.unlinkSync(curPath);
+    }
+  });
+
+  console.log('All files in public folder deleted!');
 }
+
 
 /* ------------------------------------------------------------------
  * Data transforms
@@ -218,14 +229,15 @@ function groupSubjects(arr) {
  * e.g. → [ { id: 523, mark: 70 }, { id: 524, mark: 66 } ]
  */
 function extractMarks(row) {
+  
   const ids = row.MARKS_ID || [];
   const subjectKeys = _.without(Object.keys(row), "MARKS_ID", "LEARNER");
-
+  
   let d = ids.map((id, idx) => ({
     id: parseInt(id, 10),
-    mark: row[subjectKeys[idx]] ?? "",
+    mark: row[subjectKeys[idx+1]] ?? "",
   }));
-  
+
   return d
 }
 

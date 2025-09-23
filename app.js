@@ -15,6 +15,7 @@ db.sequelize.sync({ force: false })
 .catch(err => console.error(err)); 
 
 // 
+app.use(express.json()); 
 app.use(cors())
 //add middleware
 app.use(expressFileupload())

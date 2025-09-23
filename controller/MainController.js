@@ -7,6 +7,8 @@ const {enroleStudents, mergeEnrolmentsToStudent} = require("../utils/controller_
 const db = require("../model");
 const {Op} = require('sequelize');
 const { mapSubjectById, renameKeysInArray } = require('../utils/grade');
+const { grade, exam_short_name } = require('../utils/constant');
+const { response } = require('express');
 
 function readExcelFile(req, res){
   if (!req.files || !req.files.file) {
@@ -88,9 +90,9 @@ async function uploadPhotos(req, res){
 }
 // 
 async function deletePhotos (req,res){
-  let deleted = await deleteUploadFolder(path.join(__dirname,'public','uploads'))
-  deleted? res.send('deletes').status(200) : res.send('Error').status(400)
-}
+  let deleted = deleteUploadFolder(path.join(__dirname,'../public','uploads'))
+  deleted? res.send('deleted').status(200) : res.send('Error').status(400)
+} 
 
 //get enrolement in year, term, clas
 async function getEnrolement(req, res) {
@@ -188,6 +190,7 @@ async function updateMarks(results) {
     if (!Array.isArray(results) || results.length === 0) return results;
 
     for (let result of results) {
+      const Enrolement = db.enrolement;
       // Ensure MARKS_ID is always an array
       if (typeof result.MARKS_ID === "string") {
         result.MARKS_ID = result.MARKS_ID.split(",");
@@ -197,7 +200,6 @@ async function updateMarks(results) {
       
       // call the db
       for (const data of a_student_data) {
-        const Enrolement = db.enrolement;
         
         // Validate mark
         const parsed = parseInt(data.mark, 10);
@@ -205,11 +207,6 @@ async function updateMarks(results) {
           Number.isInteger(parsed) && parsed >= 0 && parsed <= 100;
 
         const markValue = is_valid ? parsed : null;
-
-        // Update existing row
-           console.log({ mark: markValue },
-           { where: { id: data.id } });
-
         await Enrolement.update({ mark: markValue },{ where: { id: data.id } });
       }
     }
@@ -224,11 +221,63 @@ async function updateMarks(results) {
 async function getSchoolInfo(req, res){
   const School = db.school;
   const school = await School.findOne({ raw:true })
-  console.log(school);
-  res.send(school)
+  let info = {}
+  // 
+  if(school){
+    info['SCHOOL NAME'] = school.school
+    info['BOX NO'] = school?.box_no
+    info['EMAIL'] = school.email
+    info['PHONE'] = school.phone
+    info['LOCATION'] = school.location
+    info['MOTO'] = school.motto
+    info['id'] = school.id
+    info['DISTRICT/CITY'] = school.district
+  }else{
+    info = {}
+  }
+  res.send({info, grade})
   
 }
 
+// delete student from db and all the related data
+async function deletStudents(req, res){
+  let {ids} = req.body
+   const Student = db.student;
+   const Enrolement = db.enrolement;
+  let resonse = await Student.destroy({
+    where:{
+      id:{[Op.in]:ids} 
+  }})
+  console.log(resonse);
+  
+  // 
+  let deleted_marks = await Enrolement.destroy({
+    where:{
+      // year:set_time.year,
+      // term:set_time.term,
+      id:{[Op.in]:ids} 
+  }})
+  
+  res.send({response,deleted_marks})
+
+  
+}
+// delete student from db and all the related data
+async function deletStudents(req, res){
+  let {ids, set_time} = req.body
+   const Enrolement = db.enrolement;
+  //  
+  let deleted_marks = await Enrolement.destroy({
+    where:{
+      year:set_time.year,
+      term:set_time.term,
+      exam:exam_short_name[set_time.exam],
+      learner_id:{[Op.in]:ids} 
+  }})
+  res.send({deleted_marks})
+
+  
+}
 module.exports = { 
   readExcelFile, 
   uploadPhotos, 
@@ -236,5 +285,6 @@ module.exports = {
   getEnrolement,
   getSubjectEnrolement,
   updateMarks,
-  getSchoolInfo
+  getSchoolInfo,
+  deletStudents
 }
