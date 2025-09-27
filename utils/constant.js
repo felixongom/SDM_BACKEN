@@ -25,6 +25,11 @@ const grade ={
     ['75-79']:3,
     ['80-84']:2,
     ['85-100']:1,
+}
+//  
+const subsidiary_grade ={
+    ['0-49']:9,
+    ['50-100']:8,
 } 
  
 //grade letter 
@@ -73,5 +78,6 @@ module.exports = {
   grade,
   grade_letter,
   points,
-  comination
+  comination,
+  subsidiary_grade
 }

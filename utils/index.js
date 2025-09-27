@@ -1,7 +1,7 @@
 const _ = require("lodash");
 // const fs = require("fs").promises;
 const fs = require('fs');
-const { getGrade, getLetter } = require("./grade");
+const { getGrade, getLetter, processICTMarks } = require("./grade");
 const { grade } = require("./constant");
 const path = require("path");
  
@@ -84,7 +84,6 @@ function deleteUploadFolder(folder_path) {
     }
   });
 
-  console.log('All files in public folder deleted!');
 }
 
 
@@ -199,7 +198,10 @@ function mergeLearnersWithPapersAndStream(
   const learnerMap = _.keyBy(learners, "id");
 
   return papersData.map((item) => {
-    item.grades = Object.values(item.marks).map((m) => getGrade(grade, m));
+    item = processICTMarks(item);
+    
+    let subject_marks = _.startsWith(item.papers.paper_1, 'ICT')?item.ict_marks:item.marks    
+    item.grades = Object.values(subject_marks).map((m) => getGrade(grade, m, item.papers.paper_1));
     item.grade_string = `(${item.grades.join(",")})`;
     item.grade_letter = getLetter(item.grades, item.papers.paper_1);
 
@@ -258,4 +260,5 @@ module.exports = {
   mergeLearnersWithPapersAndStream,
   groupSubjects,
   extractMarks,
+  deleteUploadFolder
 };

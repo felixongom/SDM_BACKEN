@@ -2,8 +2,8 @@ const _ = require("lodash");
 const db = require("../model");
 const { randomize } = require("@felix-ongom/randomize");
 const {convertSchoolInfoToObject, extractSubjects } = require("./");
-const { exam_short_name, swapObjectKeysAndValues, grade, points, comination } = require("./constant");
-const { getGrade, getLetter, getTotalPoints, mapSubjectById, assignALevelPositions } = require("./grade");
+const { exam_short_name, swapObjectKeysAndValues, grade, points, comination, subsidiary_grade } = require("./constant");
+const { getGrade, getLetter, getTotalPoints, mapSubjectById, assignALevelPositions, calcSubjectScoresFromEnrolement } = require("./grade");
 // 
 async function enroleStudents(data, CLASS) {
   let CLAS = parseInt(+CLASS.split(" ").pop());
@@ -143,23 +143,24 @@ async function mergeEnrolmentsToStudent(learners, boidata) {
         raw: true,
       });
       //
-
+      
       learner.enrolement = enrolement.map(enrol=>{          
         learner.GP_mark = enrol.mark
-        //    
+        
         return {
-        ...enrol,
-        exam:swapObjectKeysAndValues(exam_short_name)[enrol.exam],
-        paper:subjects[enrol.paper_id],
-        grade:getGrade(grade, enrol.mark)
-     }
-    });
-    //  
-     learner.combination = getSubjectCombination(learner.enrolement)
-     learner.num_subjects = countSubjects(learner.enrolement)
-     learner.num_papers = learner.enrolement.length
-     learner.reordered = reorderSubject(learner.enrolement)
-     learner.grade_per_subject = groupGradesBySubject(learner.enrolement, getLetter)
+          ...enrol,
+          exam:swapObjectKeysAndValues(exam_short_name)[enrol.exam],
+          paper:subjects[enrol.paper_id],
+          grade:getGrade(grade, enrol.mark)
+        }
+      });
+      //  
+      learner.combination = getSubjectCombination(learner.enrolement)
+      learner.num_subjects = countSubjects(learner.enrolement)
+      learner.num_papers = learner.enrolement.length
+      learner.reordered = reorderSubject(learner.enrolement)
+      learner.grade_per_subject = groupGradesBySubject(learner.enrolement, getLetter)
+      // console.log(learner);
      learner.total_points = getTotalPoints(learner.grade_per_subject)
      learner.string_grade_per_subject = groupGradesBySubjectAsStudent(learner.enrolement)
      
@@ -241,16 +242,34 @@ function reorderSubject(papers) {
 function groupGradesBySubject(papers, getLetter) {
   
   const grouped = _.groupBy(papers, (p) => p.paper.split(" ")[0]); // e.g. ENT, MTC, PHY
+ 
+  
   
   return _.mapValues(grouped, (group, subject) => {
-    const grades = group.map((p) => p.grade);
-    // pass both grades and subject to getLetter
-    const letter = getLetter(grades, subject);
-    return {
-      grade: grades,
-      letter,
-      points: points[letter]
-    };
+    if(['ICT', 'GP', 'SM','S/M'].includes(subject)){
+      
+      let subsidiary = calcSubjectScoresFromEnrolement(group);
+      let grades = getGrade(subsidiary_grade,subsidiary,subject)
+      // 
+      const letter = getLetter([grade], subject);
+      return {
+        grade: grades,
+        letter,
+        points: points[letter]
+      };
+
+    }else{
+      
+      const grades = group.map((p) => p.grade);
+      // pass both grades and subject to getLetter
+      const letter = getLetter(grades, subject);
+      return {
+        grade: grades,
+        letter,
+        points: points[letter]
+      };
+
+    }
   });
 }
 

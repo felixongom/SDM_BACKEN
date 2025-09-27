@@ -2,7 +2,11 @@ const express = require("express");
 const router = express.Router();
 const { readExcelFile, uploadPhotos, deletePhotos, 
     getEnrolement,getSubjectEnrolement, getSchoolInfo,
-    deletStudents} = require("../controller/MainController");
+    deletStudents,
+    deleteMarks,
+    deletEnrolement,
+    updateMarks,
+    updateMarksFromDashboard} = require("../controller/MainController");
 
     const {getSubjects, getSubject} = require('../controller/SubjectController')
 //upload excel file for marks and A level enrolement 
@@ -16,7 +20,9 @@ router.get('/subjec/:id', getSubject);
 router.get('/school-info', getSchoolInfo);   
 // 
 router.post("/delete-students", deletStudents);   
-router.post("/delete-student-marks", deletStudents);   
+router.post("/delete-student-marks", deletEnrolement);   
+router.post("/delete-marks", deleteMarks);   
+router.post("/update-marks", updateMarksFromDashboard);   
 
 
  

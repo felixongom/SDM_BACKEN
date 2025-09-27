@@ -55,7 +55,6 @@ function readExcelFile(req, res){
     });
     // 
     if(req.query.sheet1 ==="MARKS"){
-      // console.log('reaced',result);
       updateMarks(result.MARKS)
       res.send({result:result.MARKS, INFO:convertSchoolInfoToObject(result.INFO)})
       
@@ -78,6 +77,9 @@ function readExcelFile(req, res){
 async function uploadPhotos(req, res){
     
     const file = req.files.file
+    // 
+    deleteUploadFolder(path.join(__dirname,'../public','uploads'))
+    // 
     try {
         const uploadedFile = await saveFiles(file)
         let file_path = getFiles(req,'/uploads/',uploadedFile)
@@ -122,7 +124,7 @@ async function getEnrolement(req, res) {
     let data =  mapLearnersWithStream(learner, stream)
     let _data = await mergeEnrolmentsToStudent(data, {year, term, clas,exam })
     
-    res.send(renameKeysInArray(_data,{learner:'STUDENT NAME', stream:'STREAM', gender:'SEX'}))
+    res.send(renameKeysInArray(_.orderBy(_data, 'learner','asc'),{learner:'STUDENT NAME', stream:'STREAM', gender:'SEX'}))
   } catch (error) {
     console.log(error);
   }
@@ -132,6 +134,7 @@ async function getEnrolement(req, res) {
 //get enrolement in year, term,class
 async function getSubjectEnrolement(req, res) {
   let {clas, year, term, exam, subj_ids } = req.params
+  
   const Enrolement = db.enrolement;
   const Subject = db.subject;
   const Student = db.student;
@@ -148,21 +151,22 @@ async function getSubjectEnrolement(req, res) {
       },
       raw:true
     })
+    
     subjects = mapSubjectById(subjects)
-
+    
     let subject_enrolement = await Enrolement.findAll({
       where:{
         year:parseInt(year), 
         term:parseInt(term), 
         clas:parseInt(clas),
-        exam:parseInt(exam),
+        exam:exam_short_name[exam],
         paper_id: {
           [Op.in]:ids
         }
       },
       raw:true
     }) 
-    
+    // 
     let reshaped =  addPaperName(subject_enrolement,subjects)
     
     let grouped = _.map(groupByLearner(reshaped), (element, i)=>({...element, sequence: i+1})) 
@@ -177,7 +181,7 @@ async function getSubjectEnrolement(req, res) {
     })
     let last_result = mergeLearnersWithPapersAndStream(stream, grouped, students)
     
-    res.send(last_result)
+    res.send(_.orderBy(last_result,'learner', 'asc'))
   } catch (error) {
     console.log(error);
     
@@ -211,9 +215,34 @@ async function updateMarks(results) {
       }
     }
 
-    console.log("updated");
   } catch (error) {
     console.error("Error in updateMarks:", error);
+  }
+}
+// update marks
+async function updateMarksFromDashboard(req,res) {
+  
+  const {results} = req.body    
+  const Enrolement = db.enrolement;
+  try {
+    if (!Array.isArray(results) || results.length === 0) return results;
+
+      // call the db
+      for (const data of results) {
+        // Validate mark
+        const parsed = parseInt(data.mark, 10);
+        const is_valid =
+          Number.isInteger(parsed) && parsed >= 0 && parsed <= 100;
+        
+        const markValue = is_valid ? parsed : null;
+        let d = await Enrolement.update({ mark: markValue },{ where: { id: data.id } });
+     
+      }
+      
+      res.send('updated').status(201)
+    } catch (error) {
+      console.error("Error in updateMarks:", error);
+      res.send('not updated').status(300)
   }
 }
 
@@ -248,13 +277,10 @@ async function deletStudents(req, res){
     where:{
       id:{[Op.in]:ids} 
   }})
-  console.log(resonse);
   
   // 
   let deleted_marks = await Enrolement.destroy({
     where:{
-      // year:set_time.year,
-      // term:set_time.term,
       id:{[Op.in]:ids} 
   }})
   
@@ -262,10 +288,11 @@ async function deletStudents(req, res){
 
   
 }
-// delete student from db and all the related data
-async function deletStudents(req, res){
+// delete enrolement  from db and all the related data
+async function deletEnrolement(req, res){
   let {ids, set_time} = req.body
    const Enrolement = db.enrolement;
+   
   //  
   let deleted_marks = await Enrolement.destroy({
     where:{
@@ -274,10 +301,24 @@ async function deletStudents(req, res){
       exam:exam_short_name[set_time.exam],
       learner_id:{[Op.in]:ids} 
   }})
+  
   res.send({deleted_marks})
 
   
 }
+// 
+async function deleteMarks(req, res){
+  let {ids} = req.body
+  
+  const Enrolement = db.enrolement;
+  //  
+  let deleted_marks = await Enrolement.destroy({
+    where:{
+      id:{[Op.in]:ids} 
+  }})  
+  res.send({deleted_marks})
+}
+
 module.exports = { 
   readExcelFile, 
   uploadPhotos, 
@@ -286,5 +327,8 @@ module.exports = {
   getSubjectEnrolement,
   updateMarks,
   getSchoolInfo,
-  deletStudents
+  deletStudents,
+  deletEnrolement,
+  deleteMarks,
+  updateMarksFromDashboard
 }
