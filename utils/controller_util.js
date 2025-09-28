@@ -243,27 +243,24 @@ function groupGradesBySubject(papers, getLetter) {
   
   const grouped = _.groupBy(papers, (p) => p.paper.split(" ")[0]); // e.g. ENT, MTC, PHY
  
-  
-  
   return _.mapValues(grouped, (group, subject) => {
     if(['ICT', 'GP', 'SM','S/M'].includes(subject)){
       
-      let subsidiary = calcSubjectScoresFromEnrolement(group);
-      let grades = getGrade(subsidiary_grade,subsidiary,subject)
+      let subsidiary_marks = calcSubjectScoresFromEnrolement(group);
+      let grades = getGrade(subsidiary_grade,subsidiary_marks)
       // 
-      const letter = getLetter([grade], subject);
+      const letter = getLetter([grades], subject);
       return {
-        grade: grades,
+        grade: grades, 
         letter,
-        points: points[letter]
+        points: points[letter] 
       };
-
     }else{
       
       const grades = group.map((p) => p.grade);
       // pass both grades and subject to getLetter
       const letter = getLetter(grades, subject);
-      return {
+      return { 
         grade: grades,
         letter,
         points: points[letter]

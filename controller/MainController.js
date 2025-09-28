@@ -7,7 +7,7 @@ const {enroleStudents, mergeEnrolmentsToStudent} = require("../utils/controller_
 const db = require("../model");
 const {Op} = require('sequelize');
 const { mapSubjectById, renameKeysInArray } = require('../utils/grade');
-const { grade, exam_short_name } = require('../utils/constant');
+const { grade, exam_short_name, subsidiary_grade } = require('../utils/constant');
 const { response } = require('express');
 
 function readExcelFile(req, res){
@@ -264,7 +264,7 @@ async function getSchoolInfo(req, res){
   }else{
     info = {}
   }
-  res.send({info, grade})
+  res.send({info, grade, subsidiary_grade})
   
 }
 

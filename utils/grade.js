@@ -2,17 +2,11 @@ const _ = require("lodash");
 const { grade_letter } = require("./constant");
 
 // 
-function getGrade(grade, mark, paper='') {
-  let is_one_pater =['GP', 'ICT','SM','S/M'].includes(paper.split(' ')[0])
-  // 
+function getGrade(grade, mark) {
+
   for (const range in grade) {
     const [min, max] = range.split("-").map(Number);
-
-    if(is_one_pater && mark<50){
-      return 9
-    }else if(is_one_pater && mark>=50){
-      return 8
-    }else if (mark >= min && mark <= max) {      
+    if(mark >= min && mark <= max) {       
       return grade[range];
     }
   }
@@ -23,9 +17,10 @@ function getGrade(grade, mark, paper='') {
 function getLetter(grade_array, subject){
    
     let grades = grade_array.sort()     
-    // 
+    //
     if(subject==='GP' || subject==='SM' || subject.startsWith('ICT')){  //for subsidary paper      
-        return grades[0]<7?'O':'F'
+      console.log(grade_array, subject, grade_letter[0]);
+      return grade_array[0] <7 ? 'O':'F'
     }else if(grades.length===1){
         return grade_letter[grade_array[0]] 
     }else if(grade_array.length===2){

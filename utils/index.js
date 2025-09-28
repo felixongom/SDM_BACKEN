@@ -2,7 +2,7 @@ const _ = require("lodash");
 // const fs = require("fs").promises;
 const fs = require('fs');
 const { getGrade, getLetter, processICTMarks } = require("./grade");
-const { grade } = require("./constant");
+const { grade, subsidiary_grade } = require("./constant");
 const path = require("path");
  
 /* ------------------------------------------------------------------
@@ -194,16 +194,27 @@ function mergeLearnersWithPapersAndStream(
   papersData,
   learners,
   fieldsToPick = ["learner", "gender"]
-) {
+) { 
   const learnerMap = _.keyBy(learners, "id");
-
+ 
   return papersData.map((item) => {
     item = processICTMarks(item);
     
-    let subject_marks = _.startsWith(item.papers.paper_1, 'ICT')?item.ict_marks:item.marks    
-    item.grades = Object.values(subject_marks).map((m) => getGrade(grade, m, item.papers.paper_1));
+    let is_ict = _.startsWith(item.papers.paper_1, 'ICT')
+    let is_subsidiary = _.startsWith(item.papers.paper_1, 'ICT') || _.startsWith(item.papers.paper_1, 'GP') || _.startsWith(item.papers.paper_1, 'SM') || _.startsWith(item.papers.paper_1, 'S/M')
+    
+    let subject_marks = is_ict?item.ict_marks:item.marks
+    // console.log(item.grades, subject_marks);
+    
+    item.grades = Object.values(subject_marks).map((m) => {
+      let _grade = is_subsidiary?subsidiary_grade:grade
+      return getGrade(_grade, m, item.papers.paper_1)
+    });
     item.grade_string = `(${item.grades.join(",")})`;
     item.grade_letter = getLetter(item.grades, item.papers.paper_1);
+    // console.log("_________________________"); 
+    // console.log(item.grades, item.grade_string, item.grade_letter, item.papers.paper_1); 
+    // console.log("_________________________"); 
 
     const learner = learnerMap[item.learner_id];
     if (learner) {
