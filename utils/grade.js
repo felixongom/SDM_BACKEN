@@ -7,7 +7,7 @@ function getGrade(grade, mark) {
   for (const range in grade) {
     const [min, max] = range.split("-").map(Number);
     if(mark >= min && mark <= max) {       
-      return grade[range];
+      return grade[range];  
     }
   }
   return null; // return null if mark is out of range
@@ -19,7 +19,6 @@ function getLetter(grade_array, subject){
     let grades = grade_array.sort()     
     //
     if(subject==='GP' || subject==='SM' || subject.startsWith('ICT')){  //for subsidary paper      
-      console.log(grade_array, subject, grade_letter[0]);
       return grade_array[0] <7 ? 'O':'F'
     }else if(grades.length===1){
         return grade_letter[grade_array[0]] 
@@ -258,6 +257,74 @@ function calcSubjectScoresFromEnrolement (papers) {
   return Math.round(scaled1 + scaled2 /* + extra */);
 }
 
+//counting the number of grade and returning all calculated
+
+/**
+ * Summarize grade distribution and weighted totals
+ * @param {Array} data - Array of learner result objects
+ * @param {String} subject - Subject name to label in the result
+ * @returns {Object}
+ */
+function summarizeGrades(data, subject = '') {
+  // grade buckets we care about
+  const gradeBuckets = ['A', 'B', 'C', 'D', 'E','O','F'];
+  
+  // Initialize tallies
+  const summary = {
+    A: 0, B: 0, C: 0, D: 0, E: 0, F:0, O:0,
+    AWeight: 0, BWeight: 0, CWeight: 0, DWeight: 0, EWeight: 0,FWeight:0, OWeight:0,
+    MISS: 0, MISSWeight: 0,
+    TOTAL: 0, TOTAL_WAIGHT: 0,
+    subject
+  };
+
+  // Go through each learner
+  _.forEach(data, learner => {
+    const grade = _.upperCase(_.get(learner, 'grade_letter', '')).trim();
+    const marksObj = _.get(learner, 'marks', {});
+    
+    // Sum of non-null marks for weighting
+    const weight = _.sum(
+      _.values(marksObj).map(m => _.isNumber(m) ? m : 0)
+    );
+
+    // Determine if this learner is missing (all marks null/NaN)
+    const allMissing = _.every(_.values(marksObj), v => v == null);
+
+    if (allMissing) {
+      summary.MISS += 1;
+      summary.MISSWeight += 0; // weight of missing is 0
+    } else if (gradeBuckets.includes(grade)) {
+      summary[grade] += 1;
+      summary[grade + 'Weight'] += weight;
+    } else {
+      // If grade not in A-E, treat it like E (or change as needed)
+      summary.E += 1;
+      summary.EWeight += weight;
+    }
+
+    summary.TOTAL += 1;
+    summary.TOTAL_WAIGHT += weight;
+  });
+
+  // Compute percentages of TOTAL for each bucket
+  const totalCount = summary.TOTAL || 1; // avoid divide by 0
+  const totalWeight = summary.TOTAL_WAIGHT || 1;
+
+  gradeBuckets.forEach(g => {
+    summary[g + 'per'] = (summary[g] / totalCount) * 100;
+  });
+  summary.MISSper = (summary.MISS / totalCount) * 100;
+
+  // Weighted percentage
+  gradeBuckets.forEach(g => {
+    summary[g + 'WeightPer'] = (summary[g + 'Weight'] / totalWeight) * 100;
+  });
+
+  return summary;
+}
+
+
 
 module.exports = {
   getGrade,
@@ -267,5 +334,6 @@ module.exports = {
   assignALevelPositions,
   renameKeysInArray,
   processICTMarks,
-  calcSubjectScoresFromEnrolement
+  calcSubjectScoresFromEnrolement,
+  summarizeGrades
 };

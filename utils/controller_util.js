@@ -251,7 +251,7 @@ function groupGradesBySubject(papers, getLetter) {
       // 
       const letter = getLetter([grades], subject);
       return {
-        grade: grades, 
+        grade: [grades], 
         letter,
         points: points[letter] 
       };

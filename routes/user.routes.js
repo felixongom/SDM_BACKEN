@@ -8,7 +8,7 @@ const { readExcelFile, uploadPhotos, deletePhotos,
     updateMarks,
     updateMarksFromDashboard} = require("../controller/MainController");
 
-    const {getSubjects, getSubject} = require('../controller/SubjectController')
+    const {getSubjects, getSubject, countGrade} = require('../controller/SubjectController')
 //upload excel file for marks and A level enrolement 
 router.post('/upload-excel', readExcelFile);
 router.post('/pics/uploads', uploadPhotos);
@@ -17,6 +17,7 @@ router.get('/enrolement/clas/:clas/year/:year/term/:term/exam/:exam', getEnrolem
 router.get('/enrolement/clas/:clas/year/:year/term/:term/exam/:exam/subj/:subj_ids', getSubjectEnrolement);
 router.get('/subjecs', getSubjects);
 router.get('/subjec/:id', getSubject);
+router.post('/count-grade/clas/:clas/year/:year/term/:term/exam/:exam', countGrade);
 router.get('/school-info', getSchoolInfo);   
 // 
 router.post("/delete-students", deletStudents);   

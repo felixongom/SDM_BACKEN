@@ -212,10 +212,7 @@ function mergeLearnersWithPapersAndStream(
     });
     item.grade_string = `(${item.grades.join(",")})`;
     item.grade_letter = getLetter(item.grades, item.papers.paper_1);
-    // console.log("_________________________"); 
-    // console.log(item.grades, item.grade_string, item.grade_letter, item.papers.paper_1); 
-    // console.log("_________________________"); 
-
+    // 
     const learner = learnerMap[item.learner_id];
     if (learner) {
       const extra = _.pick(learner, fieldsToPick);

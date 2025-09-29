@@ -134,7 +134,6 @@ async function getEnrolement(req, res) {
 //get enrolement in year, term,class
 async function getSubjectEnrolement(req, res) {
   let {clas, year, term, exam, subj_ids } = req.params
-  
   const Enrolement = db.enrolement;
   const Subject = db.subject;
   const Student = db.student;
