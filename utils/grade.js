@@ -93,39 +93,50 @@ function getLetter(grade_array, subject){
     }else if(grade_array.length===4){
         if(
             (grades.filter(item => item ===9).length ===2 && grades.filter(item => item ===8).length ===2) ||
-            (grades.filter(item => item ===9).length ===4)
+            (grades.filter(item => item ===9).length ===4) ||
+            (grades.filter(item => (item ===9)).length ===3 && grades.filter(item => item <9).length ===1)
         ) return grade_letter[9]//for F
         // 
         if(
             grades.every(value => (value === 8)) ||
             grades.every(value => (value === 7)) ||
             (grades.filter(item => item ===9).length ===2 && grades.filter(item => item <=7).length ===2) ||
-            (grades.filter(item => item ===9).length ===1 && grades.filter(item => item <=8).length ===3 )
-        ) return grade_letter[8]//for O
-        // 
-        if(
+            (grades.filter(item => item ===9).length ===1 && grades.filter(item => item <=8).length ===3 ) ||
+            (grades.filter(item => item ===7).length ===2 && grades.filter(item => item <7).length ===2) ||
+            (grades.filter(item => (item ===7 || item===8)).length ===3 && grades.filter(item => item <7).length ===1)
+          ) return grade_letter[8]//for O
+          // 
+          if(
             (grades.filter(item => item ===8).length ===1 && grades.filter(item => item ===6).length <=2 && grades.filter(item => item ===7).length ===0) ||
-            (grades.filter(item => item ===7).length ===1 && grades.filter(item => item <7).length ===3)
-        ) return grade_letter[6]//for E
-        //
-        if(
+            (grades.filter(item => item ===7).length ===1 && grades.filter(item => item <7).length ===3) ||
+            (grades.filter(item => item ===6).length ===2 && grades.filter(item => item <6).length ===2) ||
+            (grades.filter(item => (item ===6)).length ===3 && grades.filter(item => item <6).length ===1)
+          ) return grade_letter[6]//for E
+          //
+          if(
             grades.every(value => (value === 5)) ||
-            (grades.filter(item => item ===6).length ===1 && grades.filter(item => item <6).length ===3)
-        ) return grade_letter[5]//for D
-        // 
-        if(
+            (grades.filter(item => item ===6).length ===1 && grades.filter(item => item <6).length ===3) ||
+            (grades.filter(item => item ===5).length ===2 && grades.filter(item => item <5).length ===2) ||
+            (grades.filter(item => (item ===5)).length ===3 && grades.filter(item => item <5).length ===1)
+          ) return grade_letter[5]//for D
+          // 
+          if(
             grades.every(value => (value === 4)) ||
-            (grades.filter(item => item ===5).length ===1 && grades.filter(item => item <5).length ===3)
-        ) return grade_letter[4]//for C
-        // 
-        if(
+            (grades.filter(item => item ===5).length ===1 && grades.filter(item => item <5).length ===3) ||
+            (grades.filter(item => item ===4).length ===2 && grades.filter(item => item <4).length ===3) ||
+            (grades.filter(item => (item ===4)).length ===3 && grades.filter(item => item <4).length ===1)
+          ) return grade_letter[4]//for C
+          // 
+          if(
             grades.every(value => (value === 3)) ||
-            (grades.filter(item => item ===4).length ===1 && grades.filter(item => item <4).length ===3)
-        ) return grade_letter[3]//for B
-        // 
-        if(
+            (grades.filter(item => item ===4).length ===1 && grades.filter(item => item <4).length ===3) ||
+            (grades.filter(item => item ===3).length ===2 && grades.filter(item => item <3).length ===2) ||
+            (grades.filter(item => (item ===3)).length ===3 && grades.filter(item => item <3).length ===1)
+          ) return grade_letter[3]//for B
+          // 
+          if(
             grades.every(value => (value <3)) ||
-            (grades.filter(item => item ===3).length ===1 && grades.filter(item => item <3).length ===3)
+            (grades.filter(item => (item ===3)).length ===3 && grades.filter(item => item <3).length ===1)
         ) return grade_letter[1]//for A
         //
         return 'N/A' 
