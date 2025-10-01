@@ -103,6 +103,7 @@ function getLetter(grade_array, subject){
             (grades.filter(item => item ===9).length ===2 && grades.filter(item => item <=7).length ===2) ||
             (grades.filter(item => item ===9).length ===1 && grades.filter(item => item <=8).length ===3 ) ||
             (grades.filter(item => item ===7).length ===2 && grades.filter(item => item <7).length ===2) ||
+            (grades.filter(item => (item ===7 || item===8)).length ===2 && grades.filter(item => item <7).length ===2) ||
             (grades.filter(item => (item ===7 || item===8)).length ===3 && grades.filter(item => item <7).length ===1)
           ) return grade_letter[8]//for O
           // 
@@ -259,8 +260,8 @@ function calcSubjectScoresFromEnrolement (papers) {
   }
 
   // Scale paper 1 from /40 to /4, add paper 2 out of /60
-  const scaled1 = ((paper1.mark ?? 0) / 40) * 4;
-  const scaled2 = paper2.mark ?? 0;
+  const scaled1 = ((paper1.mark ?? 0) / 100) * 40;
+  const scaled2 = ((paper2.mark ?? 0) / 100) * 60;
 
   // If you want to add any extra papers (e.g. paper 3) you could add:
   // const extra = _.sumBy(papers, p => !/\b[12]\b/.test(p.paper) ? (p.mark ?? 0) : 0);

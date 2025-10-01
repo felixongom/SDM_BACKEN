@@ -125,11 +125,11 @@ async function mergeEnrolmentsToStudent(learners, boidata) {
    
   let subjects = await Subject.findAll({raw:true})      
   subjects = mapSubjectById(subjects)    
-
+  
   try {
     let all_learners = [];
     // Option 1: Loop with for..of
-
+    
     for (let learner of learners) {
       const enrolement = await Enrolement.findAll({
         where: {
@@ -146,12 +146,13 @@ async function mergeEnrolmentsToStudent(learners, boidata) {
       
       learner.enrolement = enrolement.map(enrol=>{          
         learner.GP_mark = enrol.mark
+        let is_ict = subjects[enrol.paper_id].split(' ')[0] ==='ICT';
         
         return {
           ...enrol,
           exam:swapObjectKeysAndValues(exam_short_name)[enrol.exam],
           paper:subjects[enrol.paper_id],
-          grade:getGrade(grade, enrol.mark)
+          grade:getGrade(is_ict?subsidiary_grade:grade, enrol.mark)
         }
       });
       //  
@@ -245,7 +246,6 @@ function groupGradesBySubject(papers, getLetter) {
  
   return _.mapValues(grouped, (group, subject) => {
     if(['ICT', 'GP', 'SM','S/M'].includes(subject)){
-      
       let subsidiary_marks = calcSubjectScoresFromEnrolement(group);
       let grades = getGrade(subsidiary_grade,subsidiary_marks)
       // 
