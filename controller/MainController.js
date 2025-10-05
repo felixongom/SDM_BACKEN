@@ -115,12 +115,7 @@ async function getEnrolement(req, res) {
    const ids = _.map(enroled_list, (enrolement)=>enrolement.learner_id) 
     //
     let learner = await Student.findAll({raw: true ,
-      where: {
-        id: {
-          [Op.in]:ids
-        }
-      }
-    })
+      where: {id: { [Op.in]:ids }} })
     let data =  mapLearnersWithStream(learner, stream)
     let _data = await mergeEnrolmentsToStudent(data, {year, term, clas,exam })
     

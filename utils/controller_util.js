@@ -137,11 +137,12 @@ async function mergeEnrolmentsToStudent(learners, boidata) {
           year: parseInt(boidata.year),
           term: parseInt(boidata.term),
           clas: parseInt(boidata.clas),
-          exam:parseInt(boidata.exam),
+          exam:parseInt(boidata.exam),//UNCOMMENT ME IF YOU WANT TO GE AVERAGE PER SUBJECT
         }, // or stream_id, school_id, etc depending on your logic
         attributes: ["exam", "mark", "paper_id"],
         raw: true,
       });
+      
       //
       
       learner.enrolement = enrolement.map(enrol=>{          
@@ -155,6 +156,7 @@ async function mergeEnrolmentsToStudent(learners, boidata) {
           grade:getGrade(is_ict?subsidiary_grade:grade, enrol.mark)
         }
       });
+      // console.log(learner.enrolement);
       //  
       learner.combination = getSubjectCombination(learner.enrolement)
       learner.num_subjects = countSubjects(learner.enrolement)
