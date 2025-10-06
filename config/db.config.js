@@ -1,5 +1,5 @@
 module.exports = {
   dialect: "sqlite",
-  storage: "./Db/database.sqlite", // database file will be created here
+  storage: "./Db_copy/database.sqlite", // database file will be created here
   
 };

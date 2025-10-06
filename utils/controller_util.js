@@ -1,7 +1,7 @@
 const _ = require("lodash");
 const db = require("../model");
 const { randomize } = require("@felix-ongom/randomize");
-const {convertSchoolInfoToObject, extractSubjects } = require("./");
+const {convertSchoolInfoToObject, extractSubjects, mergeExamAverages } = require("./");
 const { exam_short_name, swapObjectKeysAndValues, grade, points, comination, subsidiary_grade } = require("./constant");
 const { getGrade, getLetter, getTotalPoints, mapSubjectById, assignALevelPositions, calcSubjectScoresFromEnrolement } = require("./grade");
 // 
@@ -118,7 +118,7 @@ async function enroleStudent(student, school_id, school_info, CLAS) {
 }
 
 async function mergeEnrolmentsToStudent(learners, boidata) {
-  boidata.exam = exam_short_name[boidata.exam];  
+  boidata.exam = boidata.exam?exam_short_name[boidata.exam]:null;  
   const Enrolement = db.enrolement;
   const Subject = db.subject;
   // 
@@ -131,18 +131,18 @@ async function mergeEnrolmentsToStudent(learners, boidata) {
     // Option 1: Loop with for..of
     
     for (let learner of learners) {
+      let where = {
+              learner_id: learner.id,
+              year: parseInt(boidata.year),
+              term: parseInt(boidata.term),
+              clas: parseInt(boidata.clas),
+            }
+            // 
       const enrolement = await Enrolement.findAll({
-        where: {
-          learner_id: learner.id,
-          year: parseInt(boidata.year),
-          term: parseInt(boidata.term),
-          clas: parseInt(boidata.clas),
-          exam:parseInt(boidata.exam),//UNCOMMENT ME IF YOU WANT TO GE AVERAGE PER SUBJECT
-        }, // or stream_id, school_id, etc depending on your logic
+        where: !boidata.exam?where:{...where, exam:parseInt(boidata.exam)}, // or stream_id, school_id, etc depending on your logic
         attributes: ["exam", "mark", "paper_id"],
         raw: true,
       });
-      
       //
       
       learner.enrolement = enrolement.map(enrol=>{          
@@ -156,16 +156,33 @@ async function mergeEnrolmentsToStudent(learners, boidata) {
           grade:getGrade(is_ict?subsidiary_grade:grade, enrol.mark)
         }
       });
-      // console.log(learner.enrolement);
+      
+      // **/
+      if(!boidata.exam){
+        let merged_term = mergeExamAverages(learner.enrolement)
+        learner.multienrolement = merged_term.map(enrol=>{          
+          learner.GP_mark = enrol.mark
+          let is_ict = subjects[enrol.paper_id].split(' ')[0] ==='ICT';
+          
+          return {
+            ...enrol,
+            exam:swapObjectKeysAndValues(exam_short_name)[enrol.exam],
+            paper:subjects[enrol.paper_id],
+            grade:getGrade(is_ict?subsidiary_grade:grade, enrol.mark)
+          }
+        });
+      }
+      //**/
+      let is_merged = learner.multienrolement
       //  
-      learner.combination = getSubjectCombination(learner.enrolement)
-      learner.num_subjects = countSubjects(learner.enrolement)
-      learner.num_papers = learner.enrolement.length
-      learner.reordered = reorderSubject(learner.enrolement)
-      learner.grade_per_subject = groupGradesBySubject(learner.enrolement, getLetter)
+      learner.combination = getSubjectCombination(is_merged?learner.multienrolement: learner.enrolement)
+      learner.num_subjects = countSubjects(is_merged?learner.multienrolement: learner.enrolement)
+      learner.num_papers = is_merged?learner.multienrolement.length : learner.enrolement.length
+      learner.reordered = reorderSubject(is_merged?learner.multienrolement: learner.enrolement)
+      learner.grade_per_subject = groupGradesBySubject(is_merged?learner.multienrolement: learner.enrolement, getLetter)
       // console.log(learner);
      learner.total_points = getTotalPoints(learner.grade_per_subject)
-     learner.string_grade_per_subject = groupGradesBySubjectAsStudent(learner.enrolement)
+     learner.string_grade_per_subject = groupGradesBySubjectAsStudent(is_merged?learner.multienrolement: learner.enrolement)
      
      all_learners = [...all_learners, learner];
     }

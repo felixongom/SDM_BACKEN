@@ -255,6 +255,72 @@ function extractMarks(row) {
  * Exports
  * ------------------------------------------------------------------ */
 
+
+/**
+ * Groups marks by paper_id and computes per-exam and overall averages.
+ * - Keeps original mark (null stays null)
+ * - Uses 0 for null when computing overall average
+ * - If all marks are null, avg_mark = null
+ *
+ * @param {Array} records
+ * @returns {Array}
+ */
+function mergeExamAverages(records = []) {
+  const grouped = _.groupBy(records, "paper_id");
+
+  return _.map(grouped, (papers) => {
+    const base = _.pick(papers[0], ["paper_id", "paper"]);
+    const exams = _.groupBy(papers, "exam");
+
+    // If all marks are null, avg_mark should be null
+    const allAreNull = papers.every((p) => p.mark == null);
+
+    // Assign marks per exam (keep nulls)
+    _.forEach(exams, (marks, examName) => {
+      if (marks.length === 1) {
+        base[examName] = marks[0].mark ?? null;
+      } else {
+        // In case of multiple entries for same exam + paper_id, average them
+        const nonNullMarks = marks
+          .map((m) => m.mark)
+          .filter((m) => m != null);
+        base[examName] =
+          nonNullMarks.length > 0
+            ? _.round(_.mean(nonNullMarks), 2)
+            : null;
+      }
+    });
+
+    // Compute overall average
+    const marksForAvg = papers.map((p) => (p.mark == null ? 0 : p.mark));
+    // base.avg_mark = allAreNull ? null : _.round(_.mean(marksForAvg), 2);
+    base.mark = allAreNull ? null : _.round(_.mean(marksForAvg), 2); //AVERAGE MARK
+    base.exam = null;
+
+    return base;
+  });
+}
+
+// ---------------- Example ----------------
+const data = [
+  { exam: "BOT", mark: 30, paper_id: 16, paper: "ECO 1" },
+  { exam: "MOT", mark: null, paper_id: 16, paper: "ECO 1" },
+  { exam: "EOT", mark: 44, paper_id: 16, paper: "ECO 1" },
+
+  { exam: "BOT", mark: null, paper_id: 17, paper: "ECO 2" },
+  { exam: "MOT", mark: 45, paper_id: 17, paper: "ECO 2" },
+  { exam: "EOT", mark: null, paper_id: 17, paper: "ECO 2" },
+
+  { exam: "BOT", mark: null, paper_id: 18, paper: "ICT 1" },
+  { exam: "MOT", mark: null, paper_id: 18, paper: "ICT 1" },
+  { exam: "EOT", mark: null, paper_id: 18, paper: "ICT 1" },
+
+  { exam: "EOT", mark: 41, paper_id: 7, paper: "GEO 1" }
+];
+
+// console.log(mergeExamAverages(data));
+
+
 module.exports = {
   transformImageUrls,
   assignStudentPositions,
@@ -268,5 +334,6 @@ module.exports = {
   mergeLearnersWithPapersAndStream,
   groupSubjects,
   extractMarks,
-  deleteUploadFolder
+  deleteUploadFolder,
+  mergeExamAverages
 };
